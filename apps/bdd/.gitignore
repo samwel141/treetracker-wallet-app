@@ -6,3 +6,7 @@ logs/
 
 test-artifacts/test-videos/.tmp/
 test-artifacts/test-videos/**.log
+
+# Generated videos are copied to gh-pages at runtime.
+# Keep these large binaries out of the main branch.
+test-artifacts/reports/**/cucumber-html/videos/
