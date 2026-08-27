@@ -5,8 +5,14 @@
 [![NestJS](https://img.shields.io/badge/NestJS-Backend-E0234E?style=flat-square&logo=nestjs)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6?style=flat-square&logo=typescript)](https://typescriptlang.org/)
 
+[![E2E Tests](https://github.com/Greenstand/treetracker-wallet-app/actions/workflows/ci-cd-pr-bdd-wallet.yml/badge.svg?branch=main)](https://github.com/Greenstand/treetracker-wallet-app/actions/workflows/ci-cd-pr-bdd-wallet.yml)
+[![Master Test Report](https://img.shields.io/badge/Master%20Test%20Report-view-brightgreen?style=flat-square)](https://greenstand.github.io/treetracker-wallet-app/webdriver/web/prod/index.html)
+
 > **Secure and user-friendly digital token management platform built by
 > Greenstand**
+
+📊 **Latest master (main branch) E2E test report:**
+[greenstand.github.io/treetracker-wallet-app/webdriver/web/prod](https://greenstand.github.io/treetracker-wallet-app/webdriver/web/prod/index.html)
 
 Greenstand offers a secure, user-friendly wallet for seamless token transfers,
 built with enterprise-grade security and a scalable monorepo architecture
