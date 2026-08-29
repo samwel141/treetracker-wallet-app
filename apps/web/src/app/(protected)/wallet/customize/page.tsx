@@ -143,9 +143,13 @@ function CustomizeWallet() {
       setLogoFile(null);
       setHeroFile(null);
 
-      // Redirect after 2 seconds
+      // Wait 2s, then reload the details page.
+      // A full page navigation ensures useGetWallets fetches fresh wallet data.
+      // router.push() may reuse cached data and show outdated display_name/about.
       setTimeout(() => {
-        router.push(`/wallet/details?name=${encodeURIComponent(name)}`);
+        window.location.assign(
+          `/wallet/details?name=${encodeURIComponent(name)}`,
+        );
       }, 2000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to update wallet");
