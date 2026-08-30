@@ -29,6 +29,9 @@ export async function updateWallet(
           // Let the browser set the multipart boundary; only send auth here.
           Authorization: `Bearer ${token}`,
         },
+        // Stop the request after 30s if it hangs.
+        // This shows an error instead of keeping the save spinner forever.
+        timeout: 30000,
       },
     );
     return response.data; // the updated wallet

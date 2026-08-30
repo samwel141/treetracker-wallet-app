@@ -659,20 +659,32 @@ Then(/^on the (\S+) page$/, async (walletName: string) => {
   });
 });
 
-// And: the token sent by user 1 is present in the receiver wallet.
+// The receiver wallet should now contain a token.
+//
+// The wallet was empty before, so a token means the transfer was accepted.
+//
+// We check that a token exists, not its ID, because acceptance creates
+// a new token record with a different ID.
+//
+// This is the same count-based check used in the cancel scenario.
 Then(/^there is the token sent by the user 1$/, async () => {
-  const sel = `[data-test=token-item-${sendTokenReceivedTokenId}]`;
+  const countItems = () =>
+    browser.execute(
+      () => document.querySelectorAll("[data-test^='token-item-']").length,
+    );
   await browser.waitUntil(
     async () => {
-      if (await $(sel).isExisting()) return true;
+      if ((await countItems()) > 0) return true;
       await browser.refresh();
       await browser.pause(2000); // let getTokens fetch + render post-reload
-      return $(sel).isExisting();
+      return (await countItems()) > 0;
     },
     {
       timeout: 45000,
       interval: 1000,
-      timeoutMsg: `received token ${sendTokenReceivedTokenId} not found in wallet`,
+      timeoutMsg: `expected the accepted token (confirmation id: ${
+        sendTokenReceivedTokenId || "unknown"
+      }) to appear in the receiver wallet, but none found`,
     },
   );
 });
