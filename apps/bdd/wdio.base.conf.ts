@@ -5,12 +5,11 @@ import "dotenv/config";
 import Video from "wdio-video-reporter";
 import cucumberJson from "wdio-cucumberjs-json-reporter";
 import {
-  REPORTS_ROOT,
   PLATFORM_REPORTS_ROOT,
   PLATFORM_VIDEOS_ROOT,
   VIDEOS_TMP,
-  findVideoForCid,
   scenarioDirs,
+  associateVideos,
   FEATURE_BUCKET_BY_CID,
 } from "./utils/artifacts.ts";
 
@@ -141,6 +140,10 @@ export const baseConfig: CustomTestrunner = {
     } catch {}
     fs.mkdirSync(PLATFORM_VIDEOS_ROOT, { recursive: true });
 
+    // Clear the video scratch area to prevent stale videos from previous runs.
+    try {
+      fs.rmSync(VIDEOS_TMP, { recursive: true, force: true });
+    } catch {}
     fs.mkdirSync(VIDEOS_TMP, { recursive: true });
     fs.mkdirSync(framesRootDir, { recursive: true });
   },
@@ -235,39 +238,6 @@ export const baseConfig: CustomTestrunner = {
     );
   },
 
-  afterScenario: async function (world: any, result: any, context: any) {
-    const cid =
-      process.env.WDIO_WORKER_ID || (global as any).browser?.config?.cid || "";
-    const featureBucket =
-      FEATURE_BUCKET_BY_CID[cid] ||
-      world.gherkinDocument?.feature?.name ||
-      "feature";
-    const scenarioName = world.pickle?.name ?? "scenario";
-    const { base } = scenarioDirs(featureBucket, scenarioName);
-
-    const srcVideo = cid ? findVideoForCid(cid) : null;
-    let videoRelPath = "";
-
-    if (srcVideo) {
-      const destVideo = path.join(base, "run.mp4");
-      try {
-        if (fs.existsSync(destVideo)) fs.rmSync(destVideo, { force: true });
-      } catch {}
-      fs.renameSync(srcVideo, destVideo);
-      videoRelPath = path
-        .relative(path.join(PLATFORM_REPORTS_ROOT, "cucumber-html"), destVideo)
-        .split(path.sep)
-        .join("/");
-    }
-
-    try {
-      const html = videoRelPath
-        ? `<details><summary>Scenario video</summary><video controls width="880" src="${videoRelPath}"></video></details>`
-        : `<em>No video found</em>`;
-      await (context as any).attach(html, "text/html");
-    } catch {}
-  },
-
   afterFeature: function (_uri: string, _feature: any): void {
     const cid =
       process.env.WDIO_WORKER_ID || (global as any).browser?.config?.cid || "";
@@ -276,76 +246,24 @@ export const baseConfig: CustomTestrunner = {
     }
   },
 
-  afterSession: async function (
-    _config: any,
-    _caps: any,
-    _specs: any,
-  ): Promise<void> {
-    const settleMs = Number(process.env.WDIO_VIDEO_SETTLE_MS ?? 800);
-    if (settleMs > 0) {
-      await new Promise(r => setTimeout(r, settleMs));
-    }
-
-    const cid =
-      process.env.WDIO_WORKER_ID || (global as any).browser?.config?.cid || "";
-    if (!cid) return;
-
-    // Video reporter cleanup logic
-    const reporterJsonName = `wdio-${cid}-VideoReporter-report.json`;
-    const reporterJsonPath = path.join(VIDEOS_TMP, reporterJsonName);
-
-    if (fs.existsSync(reporterJsonPath)) {
-      const keepJson =
-        (process.env.WDIO_KEEP_VIDEO_JSON ?? "true").toLowerCase() === "true";
-      if (keepJson) {
-        const archiveDir = path.join(REPORTS_ROOT, "session-logs");
-        fs.mkdirSync(archiveDir, { recursive: true });
-        try {
-          fs.rmSync(path.join(archiveDir, reporterJsonName), { force: true });
-        } catch {}
-        fs.renameSync(
-          reporterJsonPath,
-          path.join(archiveDir, reporterJsonName),
-        );
-      } else {
-        try {
-          fs.rmSync(reporterJsonPath, { force: true });
-        } catch {}
-      }
-    }
-
-    // Frame cache cleanup
-    const framesRoot = path.join(VIDEOS_TMP, ".video-reporter-screenshots");
+  // Runs once in the launcher after every worker (and its video reporter) has
+  // finished — so all mp4s are fully written and all per-feature cucumber JSON
+  // files exist. We copy each scenario's video INTO the published report
+  // (cucumber-html/videos/…) and embed a playable <video> into its JSON, then
+  // `report:cucumber` renders the HTML from the enriched JSON. Videos are matched
+  // to scenarios here (not per-scenario) because the reporter writes mp4s
+  // asynchronously and only guarantees them by session end.
+  onComplete: function (): void {
     try {
-      if (fs.existsSync(framesRoot)) {
-        for (const entry of fs.readdirSync(framesRoot)) {
-          if (entry.includes(cid)) {
-            fs.rmSync(path.join(framesRoot, entry), {
-              recursive: true,
-              force: true,
-            });
-          }
-        }
-        if (fs.readdirSync(framesRoot).length === 0) {
-          fs.rmSync(framesRoot, { recursive: true, force: true });
-        }
-      }
-    } catch {}
-
-    // Cleanup temp files
-    try {
-      if (fs.existsSync(VIDEOS_TMP)) {
-        for (const f of fs.readdirSync(VIDEOS_TMP)) {
-          if (
-            f.includes(cid) &&
-            (f.endsWith(".mp4") || f.endsWith(".png") || f.endsWith(".json"))
-          ) {
-            try {
-              fs.rmSync(path.join(VIDEOS_TMP, f), { force: true });
-            } catch {}
-          }
-        }
-      }
-    } catch {}
+      const count = associateVideos();
+      console.log(`🎬 Embedded ${count} scenario video(s) into the report.`);
+    } catch (err) {
+      console.warn("⚠️  Video association failed:", (err as Error)?.message);
+    } finally {
+      // Drop the scratch area now that videos have been copied into the report.
+      try {
+        fs.rmSync(VIDEOS_TMP, { recursive: true, force: true });
+      } catch {}
+    }
   },
 };
