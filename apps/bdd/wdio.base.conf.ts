@@ -109,7 +109,10 @@ export const baseConfig: CustomTestrunner = {
     strict: false,
     // Lift the per-step timeout when BDD_PAUSE is set so a manual-inspection
     // pause (e.g. on the notifications page) doesn't trip Cucumber's timeout.
-    timeout: process.env.BDD_PAUSE ? 86_400_000 : 60_000,
+    // Otherwise 120s (vs. Cucumber's 60s default): Keycloak login and multiple
+    // navigations can be slow under parallel load. CI uses the static build to
+    // avoid Next.js route compilation delays; the extra time keeps auth steps safe.
+    timeout: process.env.BDD_PAUSE ? 86_400_000 : 120_000,
     ignoreUndefinedDefinitions: false,
     format: ["progress"],
   },

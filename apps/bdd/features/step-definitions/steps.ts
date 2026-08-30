@@ -1091,6 +1091,11 @@ When(
   /^the user upload a logo file with size: (\d+)KB$/,
   async (size: string) => {
     const sizeInBytes = parseInt(size) * 1024;
+    // Wait for the logo input to render before injecting the file.
+    // Otherwise, querySelector may run too early and return "Logo input not found".
+    await $(
+      '[data-test="customize-logo-upload"] input[type="file"]',
+    ).waitForExist({ timeout: 20000 });
     await browser.execute(bytes => {
       // Create a test image blob
       const pngHeader = new Uint8Array([
@@ -1124,6 +1129,10 @@ When(
   /^the user upload a hero image file with size: (\d+)KB$/,
   async (size: string) => {
     const sizeInBytes = parseInt(size) * 1024;
+    // Wait for the customize page's hero input to render before injecting the file.
+    await $(
+      '[data-test="customize-hero-upload"] input[type="file"]',
+    ).waitForExist({ timeout: 20000 });
     await browser.execute(bytes => {
       const pngHeader = new Uint8Array([
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
@@ -1156,6 +1165,10 @@ When(
   /^the user try to upload a logo file with size: (\d+)MB$/,
   async (size: string) => {
     const sizeInBytes = parseInt(size) * 1024 * 1024;
+    // Wait for the customize page's logo input to render before injecting the file.
+    await $(
+      '[data-test="customize-logo-upload"] input[type="file"]',
+    ).waitForExist({ timeout: 20000 });
     await browser.execute(bytes => {
       const pngHeader = new Uint8Array([
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
