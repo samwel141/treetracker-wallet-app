@@ -88,10 +88,16 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Start user service in the background
+      # Build once and serve the static export (`output: "export"`).
+      # `next dev` compiles routes on first request, which can exceed Cucumber's timeout.
+      # The static `out/` export serves routes immediately and matches what we deploy.
+      - name: Build web app (static export)
+        run: yarn web:build
+
+      - name: Start services in the background
         run: |
           yarn user:dev &>/dev/null & npx wait-on tcp:8080 --timeout 30000
-          yarn web:dev &>/dev/null & npx wait-on tcp:3000 --timeout 30000
+          npx --yes serve apps/web/out -l 3000 &>/dev/null & npx wait-on tcp:3000 --timeout 60000
 
       - name: Run full bdd test
         uses: cypress-io/github-action@v6
