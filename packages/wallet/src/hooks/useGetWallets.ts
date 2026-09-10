@@ -29,6 +29,7 @@ export const useGetWallets = () => {
             name: w.name,
             about: w.about,
             display_name: w.display_name,
+            logo_url: w.logo_url,
             created_at: new Date(w.created_at).toLocaleString("en-US", {
               month: "long",
               day: "numeric",

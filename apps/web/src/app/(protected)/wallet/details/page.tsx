@@ -11,6 +11,7 @@ import {
   Divider,
   Snackbar,
   Alert,
+  Avatar,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
@@ -62,13 +63,22 @@ function WalletDetails() {
 
       {/* Basic wallet info */}
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h6"
-          fontWeight={600}
-          data-test="wallet-details-name"
-        >
-          {wallet?.display_name || name}
-        </Typography>
+        <Stack direction="row" alignItems="center" gap={1.5}>
+          <Avatar
+            src={wallet?.logo_url}
+            alt={name}
+            data-test="wallet-details-logo"
+          >
+            {name?.charAt(0).toUpperCase()}
+          </Avatar>
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            data-test="wallet-details-name"
+          >
+            {wallet?.display_name || name}
+          </Typography>
+        </Stack>
         <Stack direction="row" gap={1}>
           <Button
             variant="text"
