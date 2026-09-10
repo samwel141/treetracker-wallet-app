@@ -63,7 +63,12 @@ const CustomTextField: React.FC<CustomTextFieldProps> = memo((props) => {
         : "on";
 
   return (
-    <FormControl sx={{ width: 1, my: 2 }} variant="filled" error={!!error}>
+    <FormControl
+      sx={{ width: 1, my: 2 }}
+      variant="filled"
+      error={!!error}
+      required={required}
+    >
       <InputLabel htmlFor={inputId}>{label}</InputLabel>
       <FilledInput
         id={inputId}
