@@ -1,6 +1,7 @@
 export const SELECTORS = {
   walletCreateOpen: "wallet-create-open",
   walletNameInput: "wallet-create-name",
+  walletDescriptionInput: "wallet-create-description",
   walletCreateSubmitButton: "wallet-create-submit",
   walletList: "wallet-list",
   errorHelperText: "error-helper-text",

@@ -38,8 +38,6 @@ export default function WalletPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const normalize = (s: string) => s.trim().toLowerCase();
-
   const { createWallet } = useCreateWallet();
   const authToken = useAtomValue(tokenAtom);
 
@@ -56,9 +54,6 @@ export default function WalletPage() {
     name: string;
     description: string;
   }) => {
-    const isDup = wallets.some((w) => normalize(w.name) === normalize(name));
-    if (isDup) return;
-
     // First wallet for this user? (empty list before this creation)
     const isFirstWallet = wallets.length === 0;
 
