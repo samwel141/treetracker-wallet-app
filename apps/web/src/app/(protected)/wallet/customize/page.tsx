@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Box,
@@ -22,7 +22,10 @@ import {
 } from "@treetracker/wallet";
 import RichTextEditor from "@/components/RichTextEditor";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// Must match the wallet-api multer limit (server/routes/walletRouter.js).
+// Anything larger is rejected there with a 500 before it can be saved.
+const MAX_FILE_SIZE = 1000000;
+const MAX_FILE_SIZE_LABEL = "1MB";
 
 function CustomizeWallet() {
   const params = useSearchParams();
@@ -41,6 +44,7 @@ function CustomizeWallet() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   // Resolve wallet by name
   const wallet = React.useMemo(
@@ -61,13 +65,19 @@ function CustomizeWallet() {
     }
   }, [wallet]);
 
+  // The error banner renders at the top of the page, well above the Save
+  // button and the upload controls, so on a phone it lands off-screen.
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [error]);
+
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > MAX_FILE_SIZE) {
-        setError(
-          `Logo file must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`,
-        );
+        setError(`Logo file must be less than ${MAX_FILE_SIZE_LABEL}`);
         return;
       }
       if (!file.type.startsWith("image/")) {
@@ -87,9 +97,7 @@ function CustomizeWallet() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > MAX_FILE_SIZE) {
-        setError(
-          `Hero image file must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`,
-        );
+        setError(`Hero image file must be less than ${MAX_FILE_SIZE_LABEL}`);
         return;
       }
       if (!file.type.startsWith("image/")) {
@@ -199,7 +207,12 @@ function CustomizeWallet() {
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} data-test="customize-error">
+        <Alert
+          ref={errorRef}
+          severity="error"
+          sx={{ mb: 2 }}
+          data-test="customize-error"
+        >
           {error}
         </Alert>
       )}
@@ -289,7 +302,7 @@ function CustomizeWallet() {
             color="text.secondary"
             sx={{ display: "block", mt: 1 }}
           >
-            Max size: 5MB
+            Max size: {MAX_FILE_SIZE_LABEL}
           </Typography>
         </Box>
 
@@ -336,7 +349,7 @@ function CustomizeWallet() {
             color="text.secondary"
             sx={{ display: "block", mt: 1 }}
           >
-            Max size: 5MB
+            Max size: {MAX_FILE_SIZE_LABEL}
           </Typography>
         </Box>
 

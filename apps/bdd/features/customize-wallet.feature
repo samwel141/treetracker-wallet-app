@@ -36,12 +36,12 @@ Feature: Customize Wallet
     And the user is redirected to wallet details
 
   @web
-  Scenario: Reject file upload exceeding 5MB limit
+  Scenario: Reject file upload exceeding the 1MB limit
     Given There is a registered account: customize-test-4@greenstand.org, and there is an wallet named: customize-test-4-wallet
     When customize-test-4@greenstand.org login and navigate to wallet details
     And the user click the customize wallet button
     And the user try to upload a logo file with size: 6MB
-    Then an error message is shown: Logo file must be less than 5MB
+    Then an error message is shown: Logo file must be less than 1MB
     And no preview is displayed for logo
 
   @web
