@@ -61,6 +61,27 @@ function WalletDetails() {
         Back
       </Button>
 
+      {wallet?.cover_url && (
+        <Box
+          sx={{
+            mb: 2,
+            width: "100%",
+            height: 160,
+            borderRadius: 1,
+            overflow: "hidden",
+            backgroundColor: "#f0f0f0",
+          }}
+        >
+          <Box
+            component="img"
+            src={wallet.cover_url}
+            alt={`${wallet.display_name || name} cover`}
+            data-test="wallet-details-cover"
+            sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </Box>
+      )}
+
       {/* Basic wallet info */}
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Stack direction="row" alignItems="center" gap={1.5}>

@@ -55,8 +55,8 @@ function CustomizeWallet() {
       if (wallet.logo_url) {
         setLogoPreview(wallet.logo_url);
       }
-      if ((wallet as any).cover_image_url) {
-        setHeroPreview((wallet as any).cover_image_url);
+      if (wallet.cover_url) {
+        setHeroPreview(wallet.cover_url);
       }
     }
   }, [wallet]);
