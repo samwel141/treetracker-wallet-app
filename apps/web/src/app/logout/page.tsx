@@ -1,19 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
-import { initKeycloak, logout } from "@/auth/keycloak";
+import { clearStoredTokens, initKeycloak, logout } from "@/auth/keycloak";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 // Logs out of Keycloak (clears the SSO session) and redirects to /login.
 export default function LogoutPage() {
   useEffect(() => {
     (async () => {
-      // Clear the mirrored access token first.
+      // Clear the mirrored access token and the stored refresh pair first.
       try {
         sessionStorage.removeItem("token");
       } catch {
         /* ignore */
       }
+      clearStoredTokens();
       // Ensure Keycloak is initialized (endpoints + current session/tokens
       // loaded) BEFORE logging out — on a fresh /logout page load, calling
       // logout() before init can't build a proper end-session redirect and the
