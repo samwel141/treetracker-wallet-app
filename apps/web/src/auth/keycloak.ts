@@ -17,6 +17,45 @@ export function getKeycloak(): Keycloak | null {
   return keycloak;
 }
 
+// sessionStorage key holding the tokens needed to resume a session across a
+// page load. Separate from the `token` key that tokenAtom owns, so the two
+// serialisations never have to agree.
+const STORED_TOKENS_KEY = "kc_tokens";
+
+type StoredTokens = { token?: string; refreshToken?: string };
+
+function readStoredTokens(): StoredTokens {
+  try {
+    const raw = sessionStorage.getItem(STORED_TOKENS_KEY);
+    return raw ? (JSON.parse(raw) as StoredTokens) : {};
+  } catch {
+    return {};
+  }
+}
+
+// Call after every successful init or refresh: Keycloak may rotate the refresh
+// token, so the stored pair has to be replaced, not just written once.
+export function saveStoredTokens(): void {
+  const kc = getKeycloak();
+  if (!kc?.token || !kc.refreshToken) return;
+  try {
+    sessionStorage.setItem(
+      STORED_TOKENS_KEY,
+      JSON.stringify({ token: kc.token, refreshToken: kc.refreshToken }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearStoredTokens(): void {
+  try {
+    sessionStorage.removeItem(STORED_TOKENS_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 // Idempotent init (guards React strict-mode double invocation). Also processes the
 // OIDC authorization-code response when running on the /auth/callback URL.
 export function initKeycloak(): Promise<boolean> {
@@ -26,7 +65,20 @@ export function initKeycloak(): Promise<boolean> {
     // No `onLoad` — init must NOT trigger its own redirect (that would race the
     // explicit login()/register() redirects from the login/signup pages). init
     // still processes the OIDC code on /auth/callback regardless of onLoad.
-    initPromise = kc.init({ pkceMethod: "S256", checkLoginIframe: false });
+    // `check-sso` is not an option either: this client only whitelists
+    // /auth/callback as a redirect URI, so both the silent iframe and the
+    // redirect form are rejected by Keycloak.
+    //
+    // Instead, hand back the tokens stored by the previous page load. A parsed
+    // /auth/callback takes priority over these inside keycloak-js, so the login
+    // flow is unaffected. When they are used, keycloak-js immediately calls
+    // updateToken(-1): a live session refreshes and init resolves, a dead one
+    // rejects and KeycloakProvider clears the session.
+    initPromise = kc.init({
+      pkceMethod: "S256",
+      checkLoginIframe: false,
+      ...readStoredTokens(),
+    });
   }
   return initPromise;
 }
